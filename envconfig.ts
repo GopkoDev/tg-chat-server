@@ -13,6 +13,7 @@ const requireEnv = (name: string): string => {
 export const config = {
   server: {
     port: Number(requireEnv('PORT')),
+    wsPort: Number(requireEnv('WS_PORT')),
     nodeEnv: requireEnv('NODE_ENV'),
     frontendUrl: requireEnv('FRONTEND_URL'),
   },
@@ -42,5 +43,9 @@ export const config = {
     user: requireEnv('SMTP_USER'),
     pass: requireEnv('SMTP_PASS'),
     from: requireEnv('SMTP_FROM'),
+  },
+  telegram: {
+    botToken: requireEnv('TELEGRAM_BOT_TOKEN'),
+    webhookUrl: requireEnv('TELEGRAM_WEBHOOK_URL'),
   },
 };
