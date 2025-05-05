@@ -55,23 +55,32 @@ const createMessage = async (
   text: string,
   adminId: string
 ): Promise<Message> => {
-  return await db.message.create({
-    data: {
-      chatId,
-      adminId,
-      text,
-      date: new Date(),
-      senderType: SenderType.ADMIN,
-      isRead: false,
-    },
-    include: {
-      admin: {
-        select: {
-          id: true,
-          name: true,
-          photoUrl: true,
+  return await db.$transaction(async (tx) => {
+    const message = await tx.message.create({
+      data: {
+        chatId,
+        adminId,
+        text,
+        date: new Date(),
+        senderType: SenderType.ADMIN,
+        isRead: false,
+      },
+      include: {
+        admin: {
+          select: {
+            id: true,
+            name: true,
+            photoUrl: true,
+          },
         },
       },
-    },
+    });
+
+    await tx.chat.update({
+      where: { id: chatId },
+      data: { updatedAt: new Date() },
+    });
+
+    return message;
   });
 };
