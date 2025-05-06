@@ -22,6 +22,6 @@ COPY --from=builder /app/envconfig.ts ./
 COPY --from=builder /app/tsconfig.json ./
 COPY --from=builder /app/emails ./emails
 
-EXPOSE 3000
+EXPOSE 4200
 
 CMD ["npm", "run", "start"] 
