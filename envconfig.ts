@@ -13,6 +13,7 @@ const requireEnv = (name: string): string => {
 export const config = {
   server: {
     port: Number(requireEnv('PORT')),
+    hostname: requireEnv('HOSTNAME'),
     wsPort: Number(requireEnv('WS_PORT')),
     nodeEnv: requireEnv('NODE_ENV'),
     frontendUrl: requireEnv('FRONTEND_URL'),
