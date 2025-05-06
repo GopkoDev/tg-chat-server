@@ -5,7 +5,9 @@
     "dev": "tsx watch server.ts",
     "dev-db": "docker compose up -d && tsx watch server.ts",
     "test": "vitest",
-    "mail": "email dev"
+    "mail": "email dev",
+    "start": "npx prisma migrate deploy && tsx server.ts",
+    "build": "npx prisma generate"
   },
   "dependencies": {
     "@hono/node-server": "^1.14.0",
