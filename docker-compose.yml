@@ -24,16 +24,6 @@ services:
     environment:
       - REDIS_PASSWORD=${REDIS_PASSWORD}
 
-  backend:
-    image: your-backend-image
-    container_name: tg-chat-backend
-    restart: always
-    ports:
-      - '0.0.0.0:4200:4200'
-    depends_on:
-      - postgres
-      - redis
-
 volumes:
   db_data:
   redis_data:

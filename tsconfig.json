@@ -8,6 +8,7 @@
     "types": ["node", "vitest"],
     "jsx": "react",
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "outDir": "dist"
   }
 }
