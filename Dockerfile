@@ -34,4 +34,4 @@ RUN mkdir -p /app/logs && chown -R hono:nodejs /app/logs
 USER hono
 EXPOSE 3000
 
-CMD ["node", "/app/dist/server.js"] 
+CMD ["/bin/sh", "-c", "npm run migrate && node /app/dist/server.js"] 
