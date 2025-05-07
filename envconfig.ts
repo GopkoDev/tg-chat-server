@@ -17,6 +17,7 @@ export const config = {
     wsPort: Number(requireEnv('WS_PORT')),
     nodeEnv: requireEnv('NODE_ENV'),
     frontendUrl: requireEnv('FRONTEND_URL'),
+    isDisabledRegistration: requireEnv('IS_DISABLED_REGISTRATION'),
   },
   app: {
     name: requireEnv('APP_NAME'),

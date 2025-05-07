@@ -8,16 +8,22 @@ import resetPasswordRouter from './reset-password/reset.routes.js';
 import refreshToken from './refresh-token/refresh.routes.js';
 import verifyEmailRouter from './verify-email/verify-email.routes.js';
 import resenrVerifyEmailRouter from './resend-verify-email/resend-verify-email.routes.js';
+import { config } from '../../../envconfig.js';
+
+const IS_DISABLED_REGISTRATION = config.server.isDisabledRegistration;
 
 const authRoutes = new Hono();
 
 authRoutes.route('/login', loginRouter);
 authRoutes.route('/logout', logoutRouter);
-authRoutes.route('/register', registerationRouter);
 authRoutes.route('/forgot-password', forgotRouter);
 authRoutes.route('/reset-password', resetPasswordRouter);
 authRoutes.route('/refresh', refreshToken);
-authRoutes.route('/verify-mail', verifyEmailRouter);
-authRoutes.route('/resend-verify-mail', resenrVerifyEmailRouter);
+
+if (!IS_DISABLED_REGISTRATION) {
+  authRoutes.route('/register', registerationRouter);
+  authRoutes.route('/verify-mail', verifyEmailRouter);
+  authRoutes.route('/resend-verify-mail', resenrVerifyEmailRouter);
+}
 
 export { authRoutes };
