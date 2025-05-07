@@ -29,6 +29,8 @@ COPY --from=builder --chown=hono:nodejs /app/package.json /app/package.json
 COPY --from=builder --chown=hono:nodejs /app/prisma /app/prisma
 COPY --from=builder --chown=hono:nodejs /app/emails /app/emails
 
+RUN mkdir -p /app/logs && chown -R hono:nodejs /app/logs
+
 USER hono
 EXPOSE 3000
 
