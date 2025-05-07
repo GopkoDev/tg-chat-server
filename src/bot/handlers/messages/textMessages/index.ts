@@ -21,21 +21,33 @@ export const handleTextMessage = async (
       return;
     }
 
-    await db.$transaction(async (tx) => {
-      await tx.message.create({
-        data: {
-          chatId: chat.id,
-          senderType: 'CONTACT',
-          text: ctx.message.text,
-          date: new Date(ctx.message.date * 1000),
-          isRead: false,
-        },
-      });
+    await db.$transaction(
+      async (
+        tx: Omit<
+          PrismaClient,
+          | '$connect'
+          | '$disconnect'
+          | '$on'
+          | '$transaction'
+          | '$use'
+          | '$extends'
+        >
+      ) => {
+        await tx.message.create({
+          data: {
+            chatId: chat.id,
+            senderType: 'CONTACT',
+            text: ctx.message.text,
+            date: new Date(ctx.message.date * 1000),
+            isRead: false,
+          },
+        });
 
-      await tx.chat.update({
-        where: { id: chat.id },
-        data: { updatedAt: new Date() },
-      });
-    });
+        await tx.chat.update({
+          where: { id: chat.id },
+          data: { updatedAt: new Date() },
+        });
+      }
+    );
   });
 };

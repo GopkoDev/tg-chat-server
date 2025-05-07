@@ -1,7 +1,15 @@
-import { telegramApi } from '../../../../../server.js';
 import { db } from '../../../../config/db.js';
-import { SenderType } from '@prisma/client';
+import { PrismaClient } from '@prisma/client';
 import type { Message } from '@prisma/client';
+import { getTelegramApi } from '../../../../config/telegram.js';
+
+// Using string literals instead of enum due to type conflicts
+type SenderType = 'CONTACT' | 'ADMIN';
+const SenderType = {
+  ADMIN: 'ADMIN' as SenderType,
+  CONTACT: 'CONTACT' as SenderType,
+};
+
 interface SendMessageServiceParams {
   chatId: string;
   text: string;
@@ -33,6 +41,7 @@ export const sendMessageService = async ({
   }
 
   try {
+    const telegramApi = getTelegramApi();
     await telegramApi.sendMessage(telegramChatId, text);
   } catch (error) {
     console.error('Failed to send Telegram message:', error);
@@ -55,32 +64,44 @@ const createMessage = async (
   text: string,
   adminId: string
 ): Promise<Message> => {
-  return await db.$transaction(async (tx) => {
-    const message = await tx.message.create({
-      data: {
-        chatId,
-        adminId,
-        text,
-        date: new Date(),
-        senderType: SenderType.ADMIN,
-        isRead: false,
-      },
-      include: {
-        admin: {
-          select: {
-            id: true,
-            name: true,
-            photoUrl: true,
+  return await db.$transaction(
+    async (
+      tx: Omit<
+        PrismaClient,
+        | '$connect'
+        | '$disconnect'
+        | '$on'
+        | '$transaction'
+        | '$use'
+        | '$extends'
+      >
+    ) => {
+      const message = await tx.message.create({
+        data: {
+          chatId,
+          adminId,
+          text,
+          date: new Date(),
+          senderType: SenderType.ADMIN,
+          isRead: false,
+        },
+        include: {
+          admin: {
+            select: {
+              id: true,
+              name: true,
+              photoUrl: true,
+            },
           },
         },
-      },
-    });
+      });
 
-    await tx.chat.update({
-      where: { id: chatId },
-      data: { updatedAt: new Date() },
-    });
+      await tx.chat.update({
+        where: { id: chatId },
+        data: { updatedAt: new Date() },
+      });
 
-    return message;
-  });
+      return message;
+    }
+  );
 };

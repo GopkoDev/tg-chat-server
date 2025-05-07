@@ -2,6 +2,11 @@ import { serve } from '@hono/node-server';
 import app from './src/app.js';
 import { config } from './envconfig.js';
 import { startTelegramBot } from './src/bot/index.js';
+import { initTelegramApi } from './src/config/telegram.js';
+
+await initTelegramApi();
+
+await startTelegramBot(config.telegram.botToken);
 
 serve(
   {
@@ -13,5 +18,3 @@ serve(
     console.log(`Server is running on http://${info.address}:${info.port}`);
   }
 );
-
-export const telegramApi = await startTelegramBot(config.telegram.botToken);

@@ -1,18 +1,24 @@
 import type { User } from '@prisma/client';
 
+export interface PrismaUser {
+  id: string;
+  email: string | null;
+  password: string | null;
+  name: string | null;
+  photoUrl: string | null;
+  emailVerified: Date | null;
+  twoFactorEnabled: boolean;
+  twoFactorSecret: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export type SafeUser = Omit<
-  User,
-  'password' | 'createdAt' | 'updatedAt' | 'twoFactorSecret' | 'emailVerified'
+  PrismaUser,
+  'password' | 'createdAt' | 'updatedAt' | 'twoFactorSecret'
 >;
 
-export const prepareUserForClient = (user: User): SafeUser => {
-  const {
-    password,
-    createdAt,
-    updatedAt,
-    twoFactorSecret,
-    emailVerified,
-    ...safeUser
-  } = user;
+export const prepareUserForClient = (user: PrismaUser): SafeUser => {
+  const { password, createdAt, updatedAt, twoFactorSecret, ...safeUser } = user;
   return safeUser;
 };

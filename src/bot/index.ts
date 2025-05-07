@@ -1,15 +1,15 @@
 import { Bot } from 'grammy';
 import { config } from '../../envconfig.js';
-import { db } from '../config/db.js';
-import logger from '../lib/logger.js';
-
+import { PrismaClient } from '@prisma/client';
 import { registerCommands } from './handlers/comands/index.js';
 import { registerMessages } from './handlers/messages/index.js';
+import logger from '../lib/logger.js';
 
 const isProduction = config.server.nodeEnv === 'production';
 
 export const startTelegramBot = async (token: string) => {
   const bot = new Bot(token);
+  const db = new PrismaClient();
 
   registerCommands(bot, db);
   registerMessages(bot, db);
@@ -31,6 +31,4 @@ export const startTelegramBot = async (token: string) => {
   } catch (error) {
     logger.error('Failed to start bot', { error });
   }
-
-  return bot.api;
 };
