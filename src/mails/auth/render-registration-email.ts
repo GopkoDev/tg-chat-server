@@ -1,6 +1,6 @@
 import { render } from '@react-email/render';
 import React from 'react';
-import { RegistrationEmail } from '../../../emails/RegistrationEmail.jsx';
+import { RegistrationEmail } from '../../../emails/RegistrationEmail.js';
 
 interface RenderRegistrationEmailProps {
   username: string;

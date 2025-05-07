@@ -1,6 +1,6 @@
 import { render } from '@react-email/render';
 import React from 'react';
-import { ForgotPasswordEmail } from '../../../emails/ForgotPasswordEmail.jsx';
+import { ForgotPasswordEmail } from '../../../emails/ForgotPasswordEmail.js';
 
 interface RenderResetPasswordEmailProps {
   username: string;
