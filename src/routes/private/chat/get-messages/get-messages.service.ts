@@ -27,6 +27,27 @@ export const getChatMessagesService = async ({
       where: {
         chatId,
       },
+      include: {
+        reactions: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                photoUrl: true,
+              },
+            },
+            contact: {
+              select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                photoUrl: true,
+              },
+            },
+          },
+        },
+      },
       skip,
       take: limit,
       orderBy: {
