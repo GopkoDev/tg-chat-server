@@ -1,5 +1,6 @@
 import { Redis } from 'ioredis';
 import { config } from '../../envconfig.js';
+import logger from '../lib/logger.js';
 
 export const redis = new Redis({
   host: config.redis.host,
@@ -14,9 +15,9 @@ export const redis = new Redis({
   maxRetriesPerRequest: 3,
 });
 
-redis.on('error', (err) => console.error('Redis: client rrror:', err));
-redis.on('connect', () => console.log('Redis: successfully connected'));
+redis.on('error', (err) => logger.error('Redis: client rrror:', err));
+redis.on('connect', () => logger.info('Redis: successfully connected'));
 
 redis.on('reconnecting', () => {
-  console.log('Redis: reconnecting...');
+  logger.info('Redis: reconnecting...');
 });

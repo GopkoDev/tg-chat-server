@@ -1,5 +1,4 @@
 import { Bot } from 'grammy';
-import { config } from '../../envconfig.js';
 import { PrismaClient } from '@prisma/client';
 import { registerCommands } from './handlers/comands/index.js';
 import { registerMessages } from './handlers/messages/index.js';
@@ -19,7 +18,7 @@ export const startTelegramBot = async (token: string) => {
   try {
     bot.start({
       onStart: (botInfo) => {
-        console.log(`Bot is running as ${botInfo.username}`);
+        logger.info(`Bot is running as ${botInfo.username}`);
       },
       allowed_updates: [
         'message',
