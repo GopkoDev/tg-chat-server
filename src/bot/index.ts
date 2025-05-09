@@ -1,11 +1,12 @@
 import { Bot } from 'grammy';
+import type { Context } from 'grammy';
 import { PrismaClient } from '@prisma/client';
 import { registerCommands } from './handlers/comands/index.js';
 import { registerMessages } from './handlers/messages/index.js';
 import logger from '../lib/logger.js';
 
 export const startTelegramBot = async (token: string) => {
-  const bot = new Bot(token);
+  const bot = new Bot<Context>(token);
   const db = new PrismaClient();
 
   registerCommands(bot, db);
