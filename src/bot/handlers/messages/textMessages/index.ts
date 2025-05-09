@@ -1,5 +1,6 @@
 import { Bot, Context } from 'grammy';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, SenderType } from '@prisma/client';
+import logger from '../../../../lib/logger.js';
 
 export const handleTextMessage = async (
   bot: Bot<Context>,
@@ -21,33 +22,40 @@ export const handleTextMessage = async (
       return;
     }
 
-    await db.$transaction(
-      async (
-        tx: Omit<
-          PrismaClient,
-          | '$connect'
-          | '$disconnect'
-          | '$on'
-          | '$transaction'
-          | '$use'
-          | '$extends'
-        >
-      ) => {
-        await tx.message.create({
-          data: {
-            chatId: chat.id,
-            senderType: 'CONTACT',
-            text: ctx.message.text,
-            date: new Date(ctx.message.date * 1000),
-            isRead: false,
-          },
-        });
+    try {
+      await db.$transaction(
+        async (
+          tx: Omit<
+            PrismaClient,
+            | '$connect'
+            | '$disconnect'
+            | '$on'
+            | '$transaction'
+            | '$use'
+            | '$extends'
+          >
+        ) => {
+          const message = await tx.message.create({
+            data: {
+              chatId: chat.id,
+              senderType: 'CONTACT' as SenderType,
+              text: ctx.message.text,
+              date: new Date(ctx.message.date * 1000),
+              isRead: false,
+              telegramMessageId: ctx.message.message_id.toString(),
+            },
+          });
 
-        await tx.chat.update({
-          where: { id: chat.id },
-          data: { updatedAt: new Date() },
-        });
-      }
-    );
+          await tx.chat.update({
+            where: { id: chat.id },
+            data: { updatedAt: new Date() },
+          });
+        }
+      );
+    } catch (error: any) {
+      logger.error(
+        `Error saving message: ${error?.message || 'Unknown error'}`
+      );
+    }
   });
 };
