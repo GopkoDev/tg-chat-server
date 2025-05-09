@@ -21,6 +21,6 @@ chatRoutes.post(
   sendMessageController
 );
 
-chatRoutes.route('/:messageId/reactions', messageReactionsRoutes);
+chatRoutes.route('/reactions', messageReactionsRoutes);
 
 export default chatRoutes;

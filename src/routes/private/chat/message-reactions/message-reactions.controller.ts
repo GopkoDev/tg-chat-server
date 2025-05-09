@@ -5,15 +5,16 @@ import {
   removeReactionService,
   updateReactionService,
 } from './message-reactions.service.js';
-
 export const addReactionController = async (c: Context) => {
   try {
-    const messageId = c.req.param('messageId');
     const userId = c.get('userId');
-    const { emoji } = c.get('validator').body;
+    const { telegramMessageId, telegramChatId, messageId, emoji } =
+      c.get('validator').body;
 
     const response = await addReactionService({
       messageId,
+      telegramChatId,
+      telegramMessageId,
       userId,
       emoji,
     });
@@ -33,12 +34,14 @@ export const addReactionController = async (c: Context) => {
 
 export const removeReactionController = async (c: Context) => {
   try {
-    const messageId = c.req.param('messageId');
     const userId = c.get('userId');
-    const { emoji } = c.get('validator').body;
+    const { telegramMessageId, telegramChatId, messageId, emoji } =
+      c.get('validator').body;
 
     const response = await removeReactionService({
       messageId,
+      telegramChatId,
+      telegramMessageId,
       userId,
       emoji,
     });
@@ -47,9 +50,9 @@ export const removeReactionController = async (c: Context) => {
       return c.json({ error: response.error }, 500);
     }
 
-    const { data, success } = response;
+    const { success } = response;
 
-    return c.json({ data, success });
+    return c.json({ success });
   } catch (error) {
     logger.error('MESSAGE / DELETE / REACTIONS ERROR', error);
     return c.json({ error: 'Internal server error' }, 500);
@@ -58,14 +61,16 @@ export const removeReactionController = async (c: Context) => {
 
 export const updateReactionController = async (c: Context) => {
   try {
-    const messageId = c.req.param('messageId');
     const userId = c.get('userId');
-    const { emoji } = c.get('validator').body;
+    const { telegramMessageId, telegramChatId, messageId, emoji } =
+      c.get('validator').body;
 
     const response = await updateReactionService({
       messageId,
       userId,
       emoji,
+      telegramMessageId,
+      telegramChatId,
     });
 
     if (!response.success) {

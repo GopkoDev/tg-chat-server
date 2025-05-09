@@ -1,7 +1,9 @@
 import type { MessageReaction } from '@prisma/client';
 import { db } from '../../../../config/db.js';
-
+import { getTelegramApi } from '../../../../config/telegram.js';
 interface AddReactionServiceParams {
+  telegramMessageId: string;
+  telegramChatId: string;
   messageId: string;
   userId: string;
   emoji: string;
@@ -14,15 +16,35 @@ type AddReactionServiceResponse = {
 };
 
 export const addReactionService = async ({
+  telegramMessageId,
+  telegramChatId,
   messageId,
   userId,
   emoji,
 }: AddReactionServiceParams): Promise<AddReactionServiceResponse> => {
+  const botApi = getTelegramApi();
+  const resp = await botApi.setMessageReaction(
+    telegramChatId,
+    Number(telegramMessageId),
+    [{ type: 'emoji', emoji: emoji as any }]
+  );
+
+  if (!resp) {
+    return {
+      success: false,
+      error: 'Failed to add reaction to telegram',
+    };
+  }
+
   const reaction = await db.messageReaction.create({
     data: {
       messageId,
       userId,
       emoji,
+    },
+    include: {
+      user: true,
+      contact: true,
     },
   });
 
@@ -40,6 +62,8 @@ export const addReactionService = async ({
 };
 
 interface RemoveReactionServiceParams {
+  telegramMessageId: string;
+  telegramChatId: string;
   messageId: string;
   userId: string;
   emoji: string;
@@ -47,15 +71,30 @@ interface RemoveReactionServiceParams {
 
 type RemoveReactionServiceResponse = {
   success: boolean;
-  data?: MessageReaction;
   error?: string;
 };
 
 export const removeReactionService = async ({
+  telegramMessageId,
+  telegramChatId,
   messageId,
   userId,
   emoji,
 }: RemoveReactionServiceParams): Promise<RemoveReactionServiceResponse> => {
+  const botApi = getTelegramApi();
+  const resp = await botApi.setMessageReaction(
+    telegramChatId,
+    Number(telegramMessageId),
+    []
+  );
+
+  if (!resp) {
+    return {
+      success: false,
+      error: 'Failed to remove reaction from telegram',
+    };
+  }
+
   const reaction = await db.messageReaction.delete({
     where: {
       messageId_userId_emoji: {
@@ -75,7 +114,6 @@ export const removeReactionService = async ({
 
   return {
     success: true,
-    data: reaction,
   };
 };
 
@@ -83,6 +121,8 @@ interface UpdateReactionServiceParams {
   messageId: string;
   userId: string;
   emoji: string;
+  telegramMessageId: string;
+  telegramChatId: string;
 }
 
 type UpdateReactionServiceResponse = {
@@ -95,26 +135,41 @@ export const updateReactionService = async ({
   messageId,
   userId,
   emoji,
+  telegramMessageId,
+  telegramChatId,
 }: UpdateReactionServiceParams): Promise<UpdateReactionServiceResponse> => {
-  const reaction = await db.messageReaction.update({
-    where: {
-      messageId_userId_emoji: {
-        messageId,
-        userId,
-        emoji,
-      },
-    },
-    data: {
-      emoji,
-    },
-  });
+  const botApi = getTelegramApi();
+  const resp = await botApi.setMessageReaction(
+    telegramChatId,
+    Number(telegramMessageId),
+    [{ type: 'emoji', emoji: emoji as any }]
+  );
 
-  if (!reaction) {
+  if (!resp) {
     return {
       success: false,
       error: 'Failed to update reaction',
     };
   }
+
+  await db.messageReaction.deleteMany({
+    where: {
+      messageId,
+      userId,
+    },
+  });
+
+  const reaction = await db.messageReaction.create({
+    data: {
+      messageId,
+      userId,
+      emoji,
+    },
+    include: {
+      user: true,
+      contact: true,
+    },
+  });
 
   return {
     success: true,
