@@ -14,16 +14,17 @@ datasource db {
 }
 
 model User {
-  id               String         @id @default(cuid())
+  id               String            @id @default(cuid())
   name             String?
-  email            String?        @unique
-  photoUrl         String?        @map("photo_url")
+  email            String?           @unique
+  photoUrl         String?           @map("photo_url")
   password         String?
-  emailVerified    DateTime?      @map("email_verified")
-  refreshTokens    RefreshToken[]
-  twoFactorEnabled Boolean        @default(false)
+  emailVerified    DateTime?         @map("email_verified")
+  twoFactorEnabled Boolean           @default(false)
   twoFactorSecret  String?
   Message          Message[]
+  MessageReactions MessageReaction[]
+  refreshTokens    RefreshToken[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -74,14 +75,16 @@ model PasswordResetToken {
 }
 
 model Contact {
-  id           String  @id @default(uuid())
-  telegramId   String  @unique @map("telegram_id")
-  firstName    String  @map("first_name")
-  lastName     String? @map("last_name")
-  userName     String? @map("user_name")
-  languageCode String? @map("language_code")
-  isPremium    Boolean @default(false) @map("is_premium")
+  id           String            @id @default(uuid())
+  telegramId   String            @unique @map("telegram_id")
+  photoUrl     String?           @map("photo_url")
+  firstName    String            @map("first_name")
+  lastName     String?           @map("last_name")
+  userName     String?           @map("user_name")
+  languageCode String?           @map("language_code")
+  isPremium    Boolean           @default(false) @map("is_premium")
   Chat         Chat[]
+  reactions    MessageReaction[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -110,16 +113,34 @@ enum SenderType {
 }
 
 model Message {
-  id         String     @id @default(uuid())
-  chatId     String
-  chat       Chat       @relation(fields: [chatId], references: [id], onDelete: Cascade)
-  senderType SenderType
-  text       String
-  date       DateTime
-  isRead     Boolean    @default(false)
-  adminId    String?
-  admin      User?      @relation(fields: [adminId], references: [id])
+  id                String            @id @default(uuid())
+  chatId            String
+  chat              Chat              @relation(fields: [chatId], references: [id], onDelete: Cascade)
+  senderType        SenderType
+  text              String
+  date              DateTime
+  isRead            Boolean           @default(false)
+  adminId           String?
+  admin             User?             @relation(fields: [adminId], references: [id])
+  telegramMessageId String?           @map("telegram_message_id")
+  reactions         MessageReaction[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model MessageReaction {
+  id        String   @id @default(uuid())
+  emoji     String
+  messageId String
+  userId    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  contactId String?
+  contact   Contact? @relation(fields: [contactId], references: [id])
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user      User?    @relation(fields: [userId], references: [id])
+
+  @@unique([messageId, userId, emoji])
+  @@unique([messageId, contactId, emoji])
 }
