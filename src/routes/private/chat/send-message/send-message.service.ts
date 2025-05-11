@@ -91,11 +91,23 @@ const createMessage = async (
           telegramMessageId,
         },
         include: {
-          admin: {
-            select: {
-              id: true,
-              name: true,
-              photoUrl: true,
+          reactions: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  photoUrl: true,
+                },
+              },
+              contact: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  photoUrl: true,
+                },
+              },
             },
           },
         },
