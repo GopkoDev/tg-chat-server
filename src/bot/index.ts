@@ -1,14 +1,12 @@
 import { Bot } from 'grammy';
-import { config } from '../../envconfig.js';
+import type { Context } from 'grammy';
 import { PrismaClient } from '@prisma/client';
 import { registerCommands } from './handlers/comands/index.js';
 import { registerMessages } from './handlers/messages/index.js';
 import logger from '../lib/logger.js';
 
-const isProduction = config.server.nodeEnv === 'production';
-
 export const startTelegramBot = async (token: string) => {
-  const bot = new Bot(token);
+  const bot = new Bot<Context>(token);
   const db = new PrismaClient();
 
   registerCommands(bot, db);
@@ -19,15 +17,18 @@ export const startTelegramBot = async (token: string) => {
   });
 
   try {
-    if (!isProduction) {
-      bot.start({
-        onStart: (botInfo) => {
-          console.log(`Bot is running as ${botInfo.username}`);
-        },
-      });
-    } else {
-      // TODO: set webhook in production environment
-    }
+    bot.start({
+      onStart: (botInfo) => {
+        logger.info(`Bot is running as ${botInfo.username}`);
+      },
+      allowed_updates: [
+        'message',
+        'edited_message',
+        'callback_query',
+        'message_reaction',
+        'message_reaction_count',
+      ],
+    });
   } catch (error) {
     logger.error('Failed to start bot', { error });
   }

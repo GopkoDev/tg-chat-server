@@ -3,6 +3,7 @@ import app from './src/app.js';
 import { config } from './envconfig.js';
 import { startTelegramBot } from './src/bot/index.js';
 import { initTelegramApi } from './src/config/telegram.js';
+import logger from './src/lib/logger.js';
 
 await initTelegramApi();
 
@@ -15,6 +16,6 @@ serve(
     hostname: config.server.hostname,
   },
   (info) => {
-    console.log(`Server is running on http://${info.address}:${info.port}`);
+    logger.info(`Server is running on http://${info.address}:${info.port}`);
   }
 );

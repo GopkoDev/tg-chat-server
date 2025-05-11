@@ -2,6 +2,7 @@ import { db } from '../../../../config/db.js';
 import { PrismaClient } from '@prisma/client';
 import type { Message } from '@prisma/client';
 import { getTelegramApi } from '../../../../config/telegram.js';
+import logger from '../../../../lib/logger.js';
 
 // Using string literals instead of enum due to type conflicts
 type SenderType = 'CONTACT' | 'ADMIN';
@@ -40,18 +41,20 @@ export const sendMessageService = async ({
     };
   }
 
+  let telegramMessageId: string | undefined;
   try {
     const telegramApi = getTelegramApi();
-    await telegramApi.sendMessage(telegramChatId, text);
+    const sentMessage = await telegramApi.sendMessage(telegramChatId, text);
+    telegramMessageId = sentMessage.message_id.toString();
   } catch (error) {
-    console.error('Failed to send Telegram message:', error);
+    logger.error('Failed to send Telegram message:', error);
     return {
       success: false,
       error: 'Failed to send Telegram message',
     };
   }
 
-  const message = await createMessage(chatId, text, adminId);
+  const message = await createMessage(chatId, text, adminId, telegramMessageId);
 
   return {
     success: true,
@@ -62,7 +65,8 @@ export const sendMessageService = async ({
 const createMessage = async (
   chatId: string,
   text: string,
-  adminId: string
+  adminId: string,
+  telegramMessageId?: string
 ): Promise<Message> => {
   return await db.$transaction(
     async (
@@ -84,13 +88,26 @@ const createMessage = async (
           date: new Date(),
           senderType: SenderType.ADMIN,
           isRead: false,
+          telegramMessageId,
         },
         include: {
-          admin: {
-            select: {
-              id: true,
-              name: true,
-              photoUrl: true,
+          reactions: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                  photoUrl: true,
+                },
+              },
+              contact: {
+                select: {
+                  id: true,
+                  firstName: true,
+                  lastName: true,
+                  photoUrl: true,
+                },
+              },
             },
           },
         },

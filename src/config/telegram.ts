@@ -1,10 +1,10 @@
-import { Bot } from 'grammy';
+import { Bot, Context } from 'grammy';
 import { config } from '../../envconfig.js';
 let telegramApi: Bot['api'] | null = null;
 
 export const initTelegramApi = async () => {
   if (!telegramApi) {
-    const bot = new Bot(config.telegram.botToken);
+    const bot = new Bot<Context>(config.telegram.botToken);
     await bot.init();
     telegramApi = bot.api;
   }

@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { config } from '../../envconfig.js';
-
+import logger from '../lib/logger.js';
 declare global {
   var prisma: PrismaClient | undefined;
 }
@@ -11,9 +11,9 @@ if (config.server.nodeEnv !== 'production') globalThis.prisma = db;
 
 db.$connect()
   .then(() => {
-    console.log('Potgress: successfully connected');
+    logger.info('Potgress: successfully connected');
   })
   .catch((error) => {
-    console.error('Potgress: connection error:', error);
+    logger.error('Potgress: connection error:', error);
     process.exit(1);
   });
