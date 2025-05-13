@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -17,17 +11,16 @@ model User {
   id               String            @id @default(cuid())
   name             String?
   email            String?           @unique
-  photoUrl         String?           @map("photo_url")
   password         String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
   emailVerified    DateTime?         @map("email_verified")
   twoFactorEnabled Boolean           @default(false)
   twoFactorSecret  String?
+  photoUrl         String?           @map("photo_url")
   Message          Message[]
   MessageReactions MessageReaction[]
   refreshTokens    RefreshToken[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 model RefreshToken {
@@ -35,17 +28,11 @@ model RefreshToken {
   token     String   @unique
   userId    String
   expiresAt DateTime
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("refresh_tokens")
-}
-
-enum EmailVerificationType {
-  REGISTRATION
-  EMAIL_CHANGE
 }
 
 model EmailVerificationToken {
@@ -53,10 +40,9 @@ model EmailVerificationToken {
   email     String
   token     String                @unique
   pin       String
-  type      EmailVerificationType
+  createdAt DateTime              @default(now())
   expiresAt DateTime
-
-  createdAt DateTime @default(now())
+  type      EmailVerificationType
 
   @@unique([email, token])
   @@map("email_verification_tokens")
@@ -76,57 +62,44 @@ model PasswordResetToken {
 
 model Contact {
   id           String            @id @default(uuid())
-  telegramId   String            @unique @map("telegram_id")
-  photoUrl     String?           @map("photo_url")
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
   firstName    String            @map("first_name")
-  lastName     String?           @map("last_name")
-  userName     String?           @map("user_name")
-  languageCode String?           @map("language_code")
   isPremium    Boolean           @default(false) @map("is_premium")
+  languageCode String?           @map("language_code")
+  lastName     String?           @map("last_name")
+  telegramId   String            @unique @map("telegram_id")
+  userName     String?           @map("user_name")
+  photoUrl     String?           @map("photo_url")
   Chat         Chat[]
   reactions    MessageReaction[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-enum ChatType {
-  PRIVATE
-  GROUP
 }
 
 model Chat {
   id             String    @id @default(uuid())
   contactId      String
-  contact        Contact   @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
   telegramChatId String?   @map("telegram_chat_id")
-  messages       Message[]
   type           ChatType  @default(PRIVATE)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-enum SenderType {
-  CONTACT
-  ADMIN
+  contact        Contact   @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  messages       Message[]
 }
 
 model Message {
   id                String            @id @default(uuid())
+  adminId           String?
   chatId            String
-  chat              Chat              @relation(fields: [chatId], references: [id], onDelete: Cascade)
-  senderType        SenderType
-  text              String
+  createdAt         DateTime          @default(now())
   date              DateTime
   isRead            Boolean           @default(false)
-  adminId           String?
-  admin             User?             @relation(fields: [adminId], references: [id])
+  senderType        SenderType
+  text              String
+  updatedAt         DateTime          @updatedAt
   telegramMessageId String?           @map("telegram_message_id")
+  admin             User?             @relation(fields: [adminId], references: [id])
+  chat              Chat              @relation(fields: [chatId], references: [id], onDelete: Cascade)
   reactions         MessageReaction[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
 }
 
 model MessageReaction {
@@ -143,4 +116,19 @@ model MessageReaction {
 
   @@unique([messageId, userId, emoji])
   @@unique([messageId, contactId, emoji])
+}
+
+enum EmailVerificationType {
+  REGISTRATION
+  EMAIL_CHANGE
+}
+
+enum ChatType {
+  PRIVATE
+  GROUP
+}
+
+enum SenderType {
+  CONTACT
+  ADMIN
 }
