@@ -1,6 +1,7 @@
 import { Bot, Context } from 'grammy';
 import { PrismaClient, SenderType } from '@prisma/client';
 import logger from '../../../../lib/logger.js';
+import { socketService } from '../../../../lib/socket.js';
 
 export const handleTextMessage = async (
   bot: Bot<Context>,
@@ -15,6 +16,9 @@ export const handleTextMessage = async (
           telegramId: ctx.from.id.toString(),
         },
       },
+      include: {
+        contact: true,
+      },
     });
 
     if (!chat) {
@@ -23,6 +27,8 @@ export const handleTextMessage = async (
     }
 
     try {
+      let createdMessage;
+
       await db.$transaction(
         async (
           tx: Omit<
@@ -35,7 +41,7 @@ export const handleTextMessage = async (
             | '$extends'
           >
         ) => {
-          const message = await tx.message.create({
+          createdMessage = await tx.message.create({
             data: {
               chatId: chat.id,
               senderType: 'CONTACT' as SenderType,
@@ -43,6 +49,27 @@ export const handleTextMessage = async (
               date: new Date(ctx.message.date * 1000),
               isRead: false,
               telegramMessageId: ctx.message.message_id.toString(),
+            },
+            include: {
+              reactions: {
+                include: {
+                  user: {
+                    select: {
+                      id: true,
+                      name: true,
+                      photoUrl: true,
+                    },
+                  },
+                  contact: {
+                    select: {
+                      id: true,
+                      firstName: true,
+                      lastName: true,
+                      photoUrl: true,
+                    },
+                  },
+                },
+              },
             },
           });
 
@@ -52,6 +79,14 @@ export const handleTextMessage = async (
           });
         }
       );
+
+      // Emit message via socket.io
+      if (createdMessage) {
+        socketService.emitNewMessage({
+          chatId: chat.id,
+          message: createdMessage,
+        });
+      }
     } catch (error: any) {
       logger.error(
         `Error saving message: ${error?.message || 'Unknown error'}`

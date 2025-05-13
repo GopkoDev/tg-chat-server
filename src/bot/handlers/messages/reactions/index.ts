@@ -1,6 +1,7 @@
 import { Bot, Context } from 'grammy';
 import { PrismaClient } from '@prisma/client';
 import logger from '../../../../lib/logger.js';
+import { socketService } from '../../../../lib/socket.js';
 
 type ReactionContext = {
   emojiAdded: string[];
@@ -15,12 +16,22 @@ const handleAddedReactions = async (
 ): Promise<void> => {
   if (emojiAdded.length === 0) return;
 
-  await db.messageReaction.create({
+  // Create reaction in database
+  const reaction = await db.messageReaction.create({
     data: {
       emoji: emojiAdded[0],
       messageId,
       contactId,
     },
+    include: {
+      contact: true,
+    },
+  });
+
+  // Emit reaction via socket.io
+  socketService.emitNewReaction({
+    messageId,
+    reaction,
   });
 };
 
@@ -30,7 +41,8 @@ const handleUpdatedReactions = async (
 ): Promise<void> => {
   if (emojiAdded.length === 0 || emojiRemoved.length === 0) return;
 
-  await db.messageReaction.upsert({
+  // Update reaction in database
+  const reaction = await db.messageReaction.upsert({
     where: {
       messageId_contactId_emoji: {
         messageId,
@@ -46,6 +58,15 @@ const handleUpdatedReactions = async (
       messageId,
       contactId,
     },
+    include: {
+      contact: true,
+    },
+  });
+
+  // Emit reaction via socket.io
+  socketService.emitNewReaction({
+    messageId,
+    reaction,
   });
 };
 
@@ -55,12 +76,20 @@ const handleRemovedReactions = async (
 ): Promise<void> => {
   if (emojiRemoved.length === 0) return;
 
-  await db.messageReaction.deleteMany({
+  const removedReaction = await db.messageReaction.delete({
     where: {
-      emoji: { in: emojiRemoved },
-      messageId,
-      contactId,
+      messageId_contactId_emoji: {
+        messageId,
+        contactId,
+        emoji: emojiRemoved[0],
+      },
     },
+  });
+
+  // Emit removed reaction via socket.io
+  socketService.emitNewReaction({
+    messageId,
+    reaction: { id: removedReaction.id, emoji: '', messageId, contactId },
   });
 };
 

@@ -1,6 +1,8 @@
 import { Bot } from 'grammy';
 import type { Context } from 'grammy';
 import { PrismaClient } from '@prisma/client';
+import type { Contact } from '@prisma/client';
+import { socketService } from '../../../../lib/socket.js';
 
 export const startCommand = (bot: Bot<Context>, db: PrismaClient) => {
   bot.command('start', async (ctx) => {
@@ -11,9 +13,15 @@ export const startCommand = (bot: Bot<Context>, db: PrismaClient) => {
     const telegramId = from.id.toString();
     const telegramChatId = chat.id.toString();
 
-    let contact = await db.contact.findUnique({ where: { telegramId } });
+    let contact: Contact | null = await db.contact.findUnique({
+      where: { telegramId },
+    });
+    let isNewContact = false;
+    let createdChat;
 
     if (!contact) {
+      isNewContact = true;
+
       await db.$transaction(
         async (
           tx: Omit<
@@ -26,19 +34,22 @@ export const startCommand = (bot: Bot<Context>, db: PrismaClient) => {
             | '$extends'
           >
         ) => {
-          const contact = await tx.contact.create({
+          const newContact = await tx.contact.create({
             data: {
               telegramId,
               firstName: from.first_name,
               lastName: from.last_name,
               userName: from.username,
               languageCode: from.language_code,
+              isPremium: Boolean(from.is_premium),
             },
           });
 
-          await tx.chat.create({
+          contact = newContact;
+
+          createdChat = await tx.chat.create({
             data: {
-              contactId: contact.id,
+              contactId: newContact.id,
               telegramChatId,
               messages: {
                 create: {
@@ -49,9 +60,30 @@ export const startCommand = (bot: Bot<Context>, db: PrismaClient) => {
                 },
               },
             },
+            include: {
+              contact: true,
+              messages: true,
+            },
           });
         }
       );
+
+      // Emit new user event if this is a new contact
+      if (isNewContact && contact) {
+        try {
+          // @ts-ignore - обходимо проблеми з типізацією
+          socketService.emitNewUser({
+            user: {
+              id: contact.id,
+              firstName: contact.firstName,
+              lastName: contact.lastName,
+              userName: contact.userName,
+            },
+          });
+        } catch (error) {
+          console.error('Error emitting new user:', error);
+        }
+      }
     }
 
     await ctx.reply('Вітаю! Ви підключені до чату.');
